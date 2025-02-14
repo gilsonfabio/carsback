@@ -14,7 +14,7 @@ module.exports = {
         
     async create(request, response) {
         try {
-            const { viaUsrId, viaOriLat, viaOriLon, viaDesLat, viaDesLon, viaDistancia } = request.body;
+            const { viaUsrId, viaOriLat, viaOriLon, viaDesLat, viaDesLon, viaDistancia, motorista } = request.body;
 
             console.log("Recebendo requisição:", request.body);
 
@@ -41,22 +41,22 @@ module.exports = {
             });
 
             // Buscando usuário
-            const usuario = await connection('users')
-                .where('usrId', viaUsrId)
-                .select('usrId', 'usrNome', 'usrEmail', 'usrAvatar', 'usrToken')
+            const driver = await connection('motoristas')
+                .where('motId', motorista)
+                .select('*')
                 .first();
 
-            if (!usuario) {
-                return response.status(404).json({ error: 'Usuário não encontrado' });
+            if (!driver) {
+                return response.status(404).json({ error: 'Motorista não encontrado' });
             }
 
-            let token = usuario.usrToken;
+            let token = driver.mottoken;
             if (!token) {
                 return response.status(400).json({ error: 'Token do dispositivo é obrigatório' });
             }
 
             let title = 'Teste de Notificação Node.js';
-            let message = "Este é um simples teste para envio de notificação ao aplicativo.";
+            let message = `Olá ${driver.motNome}, Existe uma solicitação para você.`;
 
             const EXPO_PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
 

@@ -35,6 +35,7 @@ routes.get('/motoristas', MotoristasController.index);
 routes.post('/newmotorista', MotoristasController.create);
 routes.post('/motSignIn', MotoristasController.signIn);
 routes.put('/atuMotToken', MotoristasController.atuToken);
+routes.get('/searchDriver', MotoristasController.searchDriver);
 
 routes.get('/viagens', ViagensController.index);
 routes.post('/newtravel', ViagensController.create);

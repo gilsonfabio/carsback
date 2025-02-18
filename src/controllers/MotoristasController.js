@@ -11,6 +11,14 @@ module.exports = {
         return response.json(motoristas);
     }, 
     
+    async searchDriver (request, response) {
+        const motoristas = await connection('motoristas')
+        .orderBy('motId')
+        .select('*');
+    
+        return response.json(motoristas);
+    }, 
+
     async signIn(request, response) {
         let email = request.body.email;
         let senha = request.body.password;

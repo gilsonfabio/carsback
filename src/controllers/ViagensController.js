@@ -65,7 +65,7 @@ module.exports = {
 
             const notificationData = {
                 action: 'OPEN_APP', // Indica que a notificação deve abrir o app
-                screen: 'HomeScreen', // Opcional: para abrir uma tela específica
+                screen: 'Map', // Opcional: para abrir uma tela específica
             };
 
             let messages = [];

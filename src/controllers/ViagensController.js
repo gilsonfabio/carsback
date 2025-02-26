@@ -2,8 +2,7 @@ const { Console } = require('console');
 const connection = require('../database/connection');
 const moment = require('moment/moment');
 const axios = require('axios');
-
-const sendPushNotification = require('../database/sendPushNotification');
+const { Expo } = require('expo-server-sdk');
 
 module.exports = {   
     async index (request, response) {
@@ -57,6 +56,8 @@ module.exports = {
                 return response.status(400).json({ error: 'Token do dispositivo é obrigatório' });
             }
 
+            let expo = new Expo();
+
             let title = 'Teste de Notificação Node.js';
             let message = `Olá ${driver.motNome}, Existe uma solicitação para você.`;
 
@@ -67,7 +68,27 @@ module.exports = {
                 screen: 'HomeScreen', // Opcional: para abrir uma tela específica
             };
 
-            sendPushNotification(token, message, notificationData);
+            let messages = [];
+            messages.push({
+                to: token,
+                sound: 'default',
+                body: message,
+                data: notificationData,
+            });
+
+            let chunks = expo.chunkPushNotifications(messages);
+            let tickets = [];
+            (async () => {
+                for (let chunk of chunks) {
+                    try {
+                        let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+                        console.log(ticketChunk);
+                        tickets.push(...ticketChunk);
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+            })();
 
             // Enviando notificação via Expo
             //const pushResponse = await axios.post(EXPO_PUSH_ENDPOINT, {
@@ -84,7 +105,7 @@ module.exports = {
             //console.log("Resposta do Expo:", pushResponse.data);
 
             // ✅ Agora retorna corretamente a resposta no Express
-            //return response.json({ success: true, viaId, pushResponse: pushResponse.data });
+            return response.json({ success: true, viaId, pushResponse: tickets });
 
         } catch (error) {
             console.error("Erro no processamento:", error);

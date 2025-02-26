@@ -11,7 +11,7 @@ const ViagensController = require('./controllers/ViagensController');
 
 routes.get('/', (request, response) => {
     response.json({
-        message: 'Bem-vindo ao servidor Motors 2.01!',
+        message: 'Bem-vindo ao servidor Motors 2.02!',
     });
 });
 

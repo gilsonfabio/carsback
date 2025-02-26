@@ -3,7 +3,7 @@ const connection = require('../database/connection');
 const moment = require('moment/moment');
 const axios = require('axios');
 
-import sendPushNotification from '../database/sendPushNotification';
+const sendPushNotification = require('../database/sendPushNotification');
 
 module.exports = {   
     async index (request, response) {

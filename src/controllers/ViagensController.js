@@ -3,6 +3,8 @@ const connection = require('../database/connection');
 const moment = require('moment/moment');
 const axios = require('axios');
 
+import sendPushNotification from '../database/sendPushNotification';
+
 module.exports = {   
     async index (request, response) {
         const viagens = await connection('viagens')
@@ -60,22 +62,29 @@ module.exports = {
 
             const EXPO_PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
 
-            // Enviando notificação via Expo
-            const pushResponse = await axios.post(EXPO_PUSH_ENDPOINT, {
-                to: token,
-                sound: 'default',
-                title,
-                body: message,
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+            const notificationData = {
+                action: 'OPEN_APP', // Indica que a notificação deve abrir o app
+                screen: 'HomeScreen', // Opcional: para abrir uma tela específica
+            };
 
-            console.log("Resposta do Expo:", pushResponse.data);
+            sendPushNotification(token, message, notificationData);
+
+            // Enviando notificação via Expo
+            //const pushResponse = await axios.post(EXPO_PUSH_ENDPOINT, {
+            //    to: token,
+            //    sound: 'default',
+            //    title,
+            //    body: message,
+            //}, {
+            //    headers: {
+            //        'Content-Type': 'application/json'
+            //    }
+            //});
+
+            //console.log("Resposta do Expo:", pushResponse.data);
 
             // ✅ Agora retorna corretamente a resposta no Express
-            return response.json({ success: true, viaId, pushResponse: pushResponse.data });
+            //return response.json({ success: true, viaId, pushResponse: pushResponse.data });
 
         } catch (error) {
             console.error("Erro no processamento:", error);

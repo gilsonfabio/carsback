@@ -63,33 +63,41 @@ module.exports = {
 
             const EXPO_PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
 
-            const notificationData = {
-                action: 'OPEN_APP', // Indica que a notificação deve abrir o app
-                screen: 'Map', // Opcional: para abrir uma tela específica
-            };
-
+            if (!Expo.isExpoPushToken(token)) {
+                console.error(`Token ${token} is not a valid Expo push token`);
+                return;
+            }
+        
+            console.log(token)
+        
             let messages = [];
             messages.push({
                 to: token,
                 sound: 'default',
                 body: message,
-                data: notificationData,
+                data: { withSome: 'data' }, // Dados adicionais que você pode usar no aplicativo
             });
-
+        
             let chunks = expo.chunkPushNotifications(messages);
             let tickets = [];
             (async () => {
                 for (let chunk of chunks) {
-                    try {
-                        let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-                        console.log(ticketChunk);
-                        tickets.push(...ticketChunk);
-                    } catch (error) {
-                        console.error(error);
-                    }
+                  try {
+                    let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+                    console.log(ticketChunk);
+                    tickets.push(...ticketChunk);
+                  } catch (error) {
+                    console.error(error);
+                  }
                 }
             })();
-
+              
+            // Exemplo de uso
+            const pushToken = token; // Substitua pelo token real
+            const notificationMessage = 'Sua notificação chegou!';
+        
+            //sendPushNotification(pushToken, notificationMessage);
+            
             // Enviando notificação via Expo
             //const pushResponse = await axios.post(EXPO_PUSH_ENDPOINT, {
             //    to: token,
@@ -105,7 +113,7 @@ module.exports = {
             //console.log("Resposta do Expo:", pushResponse.data);
 
             // ✅ Agora retorna corretamente a resposta no Express
-            return response.json({ success: true, viaId, pushResponse: tickets });
+            return response.json({ success: true, viaId});
 
         } catch (error) {
             console.error("Erro no processamento:", error);

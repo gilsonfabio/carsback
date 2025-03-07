@@ -2,7 +2,8 @@ const { Console } = require('console');
 const connection = require('../database/connection');
 const moment = require('moment/moment');
 const axios = require('axios');
-const { Expo } = require('expo-server-sdk');
+
+const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY;
 
 module.exports = {   
     async index (request, response) {
@@ -50,74 +51,33 @@ module.exports = {
             if (!driver) {
                 return response.status(404).json({ error: 'Motorista não encontrado' });
             }
-
-            let token = driver.mottoken;
-            if (!token) {
-                return response.status(400).json({ error: 'Token do dispositivo é obrigatório' });
-            }
-
-            let expo = new Expo();
-
-            let title = 'Teste de Notificação Node.js';
-            let message = `Olá ${driver.motNome}, Existe uma solicitação para você.`;
-
-            const EXPO_PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
-
-            if (!Expo.isExpoPushToken(token)) {
-                console.error(`Token ${token} is not a valid Expo push token`);
-                return;
-            }
-        
-            console.log(token)
-        
-            let messages = [];
-            messages.push({
-                to: token,
-                sound: 'default',
-                body: message,
-                data: { withSome: 'data' }, // Dados adicionais que você pode usar no aplicativo
-            });
-        
-            let chunks = expo.chunkPushNotifications(messages);
-            let tickets = [];
-            (async () => {
-                for (let chunk of chunks) {
-                  try {
-                    let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-                    console.log(ticketChunk);
-                    tickets.push(...ticketChunk);
-                  } catch (error) {
-                    console.error(error);
-                  }
-                }
-            })();
-              
-            // Exemplo de uso
-            const pushToken = token; // Substitua pelo token real
-            const notificationMessage = 'Sua notificação chegou!';
-        
-            //sendPushNotification(pushToken, notificationMessage);
             
-            // Enviando notificação via Expo
-            //const pushResponse = await axios.post(EXPO_PUSH_ENDPOINT, {
-            //    to: token,
-            //    sound: 'default',
-            //    title,
-            //    body: message,
-            //}, {
-            //    headers: {
-            //        'Content-Type': 'application/json'
-            //    }
-            //});
+            let expoPushToken = driver.mottoken;
+            if (!expoPushToken) {
+                return response.status(400).json({ error: "Token do Expo é obrigatório" });
+            }
+            
+            let title = 'Teste de Solicitação'
+            let body = 'Este é um teste de Solicitação de corrida!'
 
-            //console.log("Resposta do Expo:", pushResponse.data);
-
-            // ✅ Agora retorna corretamente a resposta no Express
-            return response.json({ success: true, viaId});
-
+            const response = await axios.post(
+                  "https://fcm.googleapis.com/fcm/send",
+                  {
+                    to: expoPushToken,
+                    notification: { title, body },
+                    data: { extraData: "Alguma informação extra" },
+                  },
+                  {
+                    headers: {
+                      Authorization: `key=${FCM_SERVER_KEY}`,
+                      "Content-Type": "application/json",
+                    },
+                  }
+                );
+                response.json({ success: true, response: response.data });
+        
         } catch (error) {
-            console.error("Erro no processamento:", error);
-            return response.status(500).json({ error: error.message });
-        }
-    }
+            response.status(500).json({ error: error.message });
+        }   
+    }    
 };

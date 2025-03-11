@@ -1,9 +1,8 @@
-const { Console } = require('console');
 const connection = require('../database/connection');
 const moment = require('moment/moment');
 const axios = require('axios');
 
-const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY;
+const Expo = require('expo-server-sdk');
 
 module.exports = {   
     async index (request, response) {
@@ -17,6 +16,8 @@ module.exports = {
     async create(request, response) {
         try {
             const { viaUsrId, viaOriLat, viaOriLon, viaDesLat, viaDesLon, viaDistancia, motorista } = request.body;
+
+            const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY;
 
             console.log("Recebendo requisição:", request.body);
 
@@ -51,33 +52,49 @@ module.exports = {
             if (!driver) {
                 return response.status(404).json({ error: 'Motorista não encontrado' });
             }
+
+            console.log('Passei pelo motorista')
             
             let expoPushToken = driver.mottoken;
             if (!expoPushToken) {
                 return response.status(400).json({ error: "Token do Expo é obrigatório" });
             }
-            
-            let title = 'Teste de Solicitação'
-            let body = 'Este é um teste de Solicitação de corrida!'
 
-            const response = await axios.post(
-                  "https://fcm.googleapis.com/fcm/send",
-                  {
-                    to: expoPushToken,
-                    notification: { title, body },
-                    data: { extraData: "Alguma informação extra" },
-                  },
-                  {
-                    headers: {
-                      Authorization: `key=${FCM_SERVER_KEY}`,
-                      "Content-Type": "application/json",
-                    },
-                  }
-                );
-                response.json({ success: true, response: response.data });
-        
+            console.log('Passei pelo token', expoPushToken)
+
+            //................................................................................................................
+            
+            const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+
+            async function sendPushNotification(expoPushToken) {
+                
+                const title = 'Notificação Expo';
+                const message = 'Essa é uma notificação teste do servidor expo';
+
+                try {
+                    const response = await axios.post(EXPO_PUSH_URL, {
+                        to: expoPushToken,  
+                        sound: 'default',
+                        title,
+                        body: message,
+                    });
+
+                    console.log('Notificação enviada com sucesso:', response.data);
+                    return { success: true, response: response.data };
+                } catch (error) {
+                    console.error('Erro ao enviar notificação:', error.message);
+                    return { success: false, error: error.message };
+                }           
+            }
+
+            sendPushNotification(expoPushToken);
+            
+            //................................................................................................................
+       
         } catch (error) {
             response.status(500).json({ error: error.message });
         }   
+
+        return
     }    
 };

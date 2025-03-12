@@ -1,32 +1,30 @@
 const connection = require('../database/connection');
-const moment = require('moment/moment');
-const axios = require('axios');
+const moment = require('moment');
+const { Expo } = require('expo-server-sdk');
 
-const Expo = require('expo-server-sdk');
+//... d9264a56-4e4f-4ed5-9c8d-07ce302e59bb       /// 64b17201-dec9-4c34-beb7-f6121faf5084
+
+const expo = new Expo(); // Instância do Expo SDK
 
 module.exports = {   
-    async index (request, response) {
-        const viagens = await connection('viagens')
-        .orderBy('viaId')
-        .select('*');
-    
-        return response.json(viagens);
+    async index(request, response) {
+        try {
+            const viagens = await connection('viagens').orderBy('viaId').select('*');
+            return response.json(viagens);
+        } catch (error) {
+            return response.status(500).json({ error: error.message });
+        }
     },    
         
     async create(request, response) {
         try {
             const { viaUsrId, viaOriLat, viaOriLon, viaDesLat, viaDesLon, viaDistancia, motorista } = request.body;
 
-            const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY;
-
             console.log("Recebendo requisição:", request.body);
 
             let datAtual = new Date();
-            let year = datAtual.getFullYear();
-            let month = datAtual.getMonth();
-            let day = datAtual.getDate();
-            let datProcess = new Date(year, month, day);
-            let horProcess = moment().format('HH:mm:ss'); // Corrigido para formato 24h
+            let datProcess = new Date(datAtual.getFullYear(), datAtual.getMonth(), datAtual.getDate());
+            let horProcess = moment().format('HH:mm:ss'); // Correção do formato de hora
             
             let status = "A";
             
@@ -53,48 +51,33 @@ module.exports = {
                 return response.status(404).json({ error: 'Motorista não encontrado' });
             }
 
-            console.log('Passei pelo motorista')
+            console.log('Passei pelo motorista');
             
             let expoPushToken = driver.mottoken;
-            if (!expoPushToken) {
-                return response.status(400).json({ error: "Token do Expo é obrigatório" });
+            if (!expoPushToken || !Expo.isExpoPushToken(expoPushToken)) {
+                return response.status(400).json({ error: "Token do Expo inválido ou não fornecido" });
             }
 
-            console.log('Passei pelo token', expoPushToken)
+            console.log('Passei pelo token:', expoPushToken);
 
-            //................................................................................................................
-            
-            const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+            // Criando a notificação
+            const message = {
+                to: expoPushToken,
+                sound: 'default',
+                title: 'Nova Corrida Disponível!',
+                body: 'Uma nova corrida foi solicitada. Verifique o aplicativo!',
+            };
 
-            async function sendPushNotification(expoPushToken) {
-                
-                const title = 'Notificação Expo';
-                const message = 'Essa é uma notificação teste do servidor expo';
+            // Enviando a notificação
+            let pushReceipts = await expo.sendPushNotificationsAsync([message]);
 
-                try {
-                    const response = await axios.post(EXPO_PUSH_URL, {
-                        to: expoPushToken,  
-                        sound: 'default',
-                        title,
-                        body: message,
-                    });
+            console.log('Notificação enviada com sucesso:', pushReceipts);
 
-                    console.log('Notificação enviada com sucesso:', response.data);
-                    return { success: true, response: response.data };
-                } catch (error) {
-                    console.error('Erro ao enviar notificação:', error.message);
-                    return { success: false, error: error.message };
-                }           
-            }
-
-            sendPushNotification(expoPushToken);
-            
-            //................................................................................................................
+            return response.status(201).json({ success: true, viaId, notification: pushReceipts });
        
         } catch (error) {
-            response.status(500).json({ error: error.message });
-        }   
-
-        return
+            console.error('Erro no servidor:', error);
+            return response.status(500).json({ error: error.message });
+        }
     }    
 };

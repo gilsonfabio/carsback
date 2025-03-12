@@ -2,11 +2,11 @@
   "expo": {
     "extra": {
       "eas": {
-        "projectId": "64b17201-dec9-4c34-beb7-f6121faf5084"
+        "projectId": "d9264a56-4e4f-4ed5-9c8d-07ce302e59bb"  
       }
     },
     "android": {
-      "package": "com.gilsonfabio.backend"
+      "package": "com.gilsonfabio.carmotors"
     }
   }
 }

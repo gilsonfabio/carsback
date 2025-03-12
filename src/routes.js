@@ -8,10 +8,11 @@ const MarcasController = require('./controllers/MarcasController');
 const ModelosController = require('./controllers/ModelosController');
 const MotoristasController = require('./controllers/MotoristasController');
 const ViagensController = require('./controllers/ViagensController');
+const TravelsController = require('./controllers/TravelsController');
 
 routes.get('/', (request, response) => {
     response.json({
-        message: 'Bem-vindo ao servidor Motors 2.03!',
+        message: 'Bem-vindo ao servidor Motors 2.04!',
     });
 });
 
@@ -39,5 +40,7 @@ routes.get('/searchDriver', MotoristasController.searchDriver);
 
 routes.get('/viagens', ViagensController.index);
 routes.post('/newtravel', ViagensController.create);
+
+routes.post('/tesTravel', TravelsController.travel);
 
 module.exports = routes;

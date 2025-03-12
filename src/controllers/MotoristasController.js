@@ -28,7 +28,7 @@ module.exports = {
 
         const motorista = await connection('motoristas')
             .where('motEmail', email) 
-            .select(`motId`, `motNome`, `motEmail`, `motAvatar`, `motToken`)
+            .select(`motId`, `motNome`, `motEmail`, `motAvatar`, `motToken`, `motFireToken`)
             .first();
         
         if (!motorista) {            
@@ -49,6 +49,7 @@ module.exports = {
             email: motorista.motEmail,
             avatar: motorista.motAvatar,
             token: motorista.motoken,
+            firebaseToken: motorista.motFireToken,
         }
 
         //let token = jwt.sign({ id: user.usrId, name: user.usrNome, email: user.usrEmail, nivel: user.usrNivAcesso }, process.env.SECRET_JWT, {
@@ -98,6 +99,7 @@ module.exports = {
     async atuToken(request, response) {        
         let idMot = request.body.motId;
         let token = request.body.motToken;
+        let fireToken = request.body.motFireToken;
 
         console.log('motorista:', request.body.usrId);
         console.log('token:', request.body.usrToken);
@@ -106,6 +108,7 @@ module.exports = {
         .where('motId', idMot)
         .update({
             motToken: token, 
+            motFireToken: fireToken,
         });
            
         return response.status(200).send();
